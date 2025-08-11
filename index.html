@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anniversary Puzzle Quest 💘</title>
+<meta name="description" content="A love-themed puzzle adventure. Complete each game to unlock the next, ending in a surprise!">
+<style>
+:root{
+  --bg:#0f0f12;
+  --ink:#e9e9ef;
+  --muted:#9aa0a6;
+  --accent:#ff5fa2;
+  --accent2:#6ee7ff;
+  --good:#22c55e;
+  --warn:#f59e0b;
+  --bad:#ef4444;
+  --tile:#202028;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:sans-serif;
+  background:radial-gradient(1200px 800px at 20% 0%, #181824 0%, var(--bg) 60%);
+  color:var(--ink);
+  padding:18px;
+}
+.app{
+  max-width:960px;
+  margin:auto;
+  background:rgba(23,23,28,.86);
+  border:1px solid #2a2a35;
+  border-radius:20px;
+  padding:18px;
+}
+.header{
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+  border-bottom:1px dashed #2a2a35; padding-bottom:12px; margin-bottom:16px;
+}
+.progress{width:100%;height:8px;background:#1c1c22;border-radius:999px;overflow:hidden;margin-top:8px}
+.progress>i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.section{border:1px solid #2a2a35;border-radius:18px;padding:14px;margin:12px 0;background:linear-gradient(180deg,#15151b,#101015)}
+.section.locked{opacity:.6;filter:grayscale(.4)}
+.grid{display:grid;gap:8px}
+.grid.wordle{grid-template-columns:repeat(5,52px)}
+.cell{width:52px;height:52px;display:grid;place-items:center;font-weight:700;background:var(--tile);border-radius:10px}
+.cell.good{background:#1d402b}
+.cell.place{background:#3a2e11}
+.cell.bad{background:#2a2a2a;color:#777}
+.grid.conn{grid-template-columns:repeat(4,minmax(120px,1fr))}
+.card{background:var(--tile);padding:10px;border-radius:14px;text-align:center;cursor:pointer}
+.card.sel{outline:2px solid var(--accent)}
+.cross{display:grid;grid-template-columns:repeat(5,42px);gap:6px}
+.cross input{width:42px;height:42px;text-align:center;text-transform:uppercase}
+.mem{display:grid;grid-template-columns:repeat(4,80px);gap:10px}
+.tile{width:80px;height:80px;display:grid;place-items:center;border-radius:12px;cursor:pointer;position:relative}
+.tile .front,.tile .back{position:absolute;inset:0;display:grid;place-items:center;border-radius:12px;backface-visibility:hidden;transition:transform .28s}
+.tile .back{transform:rotateY(180deg)}
+.tile.open .front{transform:rotateY(180deg)}
+.tile.open .back{transform:rotateY(0)}
+.finale{display:none;text-align:center;padding:18px;border:1px solid #31313d;border-radius:18px}
+.finale img{max-width:100%;border-radius:16px;margin-top:10px}
+.kb{display:grid;gap:6px;margin-top:10px}
+.kb .row{display:flex;gap:6px;justify-content:center}
+.kb button{min-width:34px;padding:10px}
+.kb .wide{min-width:72px}
+#gate{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(1200px 800px at 20% 0%,#0e0e16 0%,#0a0a0f 60%);z-index:50}
+#gate .card{max-width:480px;background:#14141b;padding:18px;border-radius:20px;text-align:center}
+@media(max-width:480px){
+  .grid.wordle{grid-template-columns:repeat(5,42px)}
+  .cell{width:42px;height:42px}
+  .cross{grid-template-columns:repeat(5,36px)}
+  .cross input{width:36px;height:36px}
+  .mem{grid-template-columns:repeat(4,70px)}
+  .tile{width:70px;height:70px}
+}
+</style>
+</head>
+<body>
+
+<!-- Passcode gate -->
+<div id="gate">
+  <div class="card">
+    <h2>Anniversary Puzzle Quest 💞</h2>
+    <p>Enter our secret passcode to begin:</p>
+    <input id="code" placeholder="passcode" />
+    <button id="begin">Begin</button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="header">
+    <div>
+      <h1>Anniversary Puzzle Quest 💞</h1>
+      <div class="progress"><i id="prog"></i></div>
+    </div>
+    <button id="resetAll">Reset</button>
+  </div>
+
+  <section id="sec1" class="section">
+    <h2>1) Wordle-lite</h2>
+    <div class="grid wordle" id="wordleGrid"></div>
+    <input id="guess" maxlength="5" placeholder="Type 5 letters" />
+    <button id="submitGuess">Guess</button>
+    <div id="wordleMsg"></div>
+    <div class="kb" id="kb"></div>
+  </section>
+
+  <section id="sec2" class="section locked">
+    <h2>2) Connections</h2>
+    <div class="grid conn" id="connGrid"></div>
+    <button id="connSubmit">Submit</button>
+    <div id="connMsg"></div>
+  </section>
+
+  <section id="sec3" class="section locked">
+    <h2>3) Mini Crossword</h2>
+    <div class="cross" id="crossGrid"></div>
+    <button id="crossCheck">Check answers</button>
+    <div id="crossMsg"></div>
+  </section>
+
+  <section id="sec4" class="section locked">
+    <h2>4) Memory Match</h2>
+    <div class="mem" id="memGrid"></div>
+    <div id="memMsg"></div>
+  </section>
+
+  <section id="finale" class="finale">
+    <h2>Happy 5th Anniversary! ✨</h2>
+    <p>Five years of laughs, growth, and love — and somehow you still put up with my puzzles. 💗</p>
+    <img id="finalPhoto" src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1200&auto=format&fit=crop" alt="us 💖"/>
+  </section>
+</div>
+
+<script>
+const PASSCODE="HEART5"; // change passcode here
+const WORD="HEART"; // change Wordle answer
+const PHOTO_URL="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1200&auto=format&fit=crop";
+const $=s=>document.querySelector(s);
+const state=JSON.parse(localStorage.getItem("annivState")||"{}");
+function save(){localStorage.setItem("annivState",JSON.stringify(state));}
+function setProgress(){const done=["wordleDone","connDone","crossDone","memDone"].filter(k=>state[k]).length;$("#prog").style.width=(done/4*100)+"%";}
+function unlock(sel){$(sel).classList.remove("locked");}
+function complete(k,next){state[k]=true;save();setProgress();if(next)unlock(next);if(Object.values(state).filter(Boolean).length===4)showFinale();}
+
+$("#begin").onclick=()=>{if($("#code").value===PASSCODE){localStorage.removeItem("annivState");$("#gate").remove();}else{alert("Wrong code 💌");}};
+$("#resetAll").onclick=()=>{if(confirm("Reset progress?")){localStorage.removeItem("annivState");location.reload();}};
+
+// Wordle
+const grid=$("#wordleGrid");for(let r=0;r<6;r++){for(let c=0;c<5;c++){let d=document.createElement("div");d.className="cell";d.id=`w${r}${c}`;grid.appendChild(d);}}
+let curRow=0;
+function scoreGuess(g,a){let res=Array(5).fill("bad"),f={};for(let ch of a)f[ch]=(f[ch]||0)+1;for(let i=0;i<5;i++)if(g[i]===a[i]){res[i]="good";f[g[i]]--;}for(let i=0;i<5;i++)if(res[i]==="bad"&&f[g[i]]>0){res[i]="place";f[g[i]]--;}return res;}
+function paintRow(r,g,fb){for(let i=0;i<5;i++){let cell=$(`#w${r}${i}`);cell.textContent=g[i];cell.className="cell "+fb[i];}}
+function submitWordle(){let val=$("#guess").value.toUpperCase();if(val.length!==5)return;let fb=scoreGuess(val,WORD);paintRow(curRow,val,fb);if(val===WORD||curRow===5){complete("wordleDone","#sec2");}curRow++;$("#guess").value="";}
+$("#submitGuess").onclick=submitWordle;
+$("#guess").onkeydown=e=>{if(e.key==="Enter")submitWordle();};
+
+// On-screen keyboard
+["QWERTYUIOP","ASDFGHJKL","ENTERZXCVBNM←"].forEach(row=>{let r=document.createElement("div");r.className="row";[...row].forEach(ch=>{let b=document.createElement("button");b.textContent=ch==="←"?"⌫":ch;b.onclick=()=>{if(ch==="ENTER")submitWordle();else if(ch==="←")$("#guess").value=$("#guess").value.slice(0,-1);else $("#guess").value=($("#guess").value+ch).slice(0,5);};r.appendChild(b);});$("#kb").appendChild(r);});
+
+// Connections
+const groups={A:["LOVE","DEAR","HONEY","SWEET"],B:["MOVIE","DINNER","DANCE","WALKS"],C:["BEACH","SUNSET","PLANE","HOTEL"],D:["COFFEE","TOAST","SMILE","HUGS"]};
+let deck=Object.entries(groups).flatMap(([g,items])=>items.map(w=>({w,g}))).sort(()=>Math.random()-0.5),sel=[],solved=0;
+deck.forEach((card,i)=>{let el=document.createElement("div");el.className="card";el.textContent=card.w;el.onclick=()=>{if(el.classList.contains("locked"))return;el.classList.toggle("sel");sel.includes(i)?sel=sel.filter(x=>x!==i):sel.push(i);};$("#connGrid").appendChild(el);});
+$("#connSubmit").onclick=()=>{if(sel.length!==4)return;let chosen=sel.map(i=>$("#connGrid").children[i]);if(chosen.every(e=>e.dataset.group===chosen[0].dataset.group)){chosen.forEach(e=>e.classList.add("locked"));solved++;if(solved===4)complete("connDone","#sec3");}sel=[];};
+
+// Crossword
+const crossKey=[["T","R","U","S","T"],["#","#","#","#","O"],["N","E","A","R","#"],["#","#","#","#","V"],["L","O","V","E","#"]];
+const cross=$("#crossGrid");let crossInputs=[];
+crossKey.forEach((row,r)=>row.forEach((val,c)=>{let inp=document.createElement("input");if(val==="#"){inp.disabled=true;inp.style.background="#000";}else{inp.maxLength=1;crossInputs.push({r,c,el:inp});}cross.appendChild(inp);}));
+$("#crossCheck").onclick=()=>{let ok=true;crossInputs.forEach(({r,c,el})=>{if(el.value.toUpperCase()!==crossKey[r][c])ok=false;});if(ok)complete("crossDone","#sec4");};
+
+// Memory
+const emojis=["💐","🎬","🧋","🍕","✈️","🌅","🎵","☕️"],mem=$("#memGrid");let memDeck=[...emojis,...emojis].sort(()=>Math.random()-0.5),open=[],matches=0;
+memDeck.forEach(icon=>{let t=document.createElement("div");t.className="tile";t.innerHTML=`<div class="front">💞</div><div class="back">${icon}</div>`;t.onclick=()=>{if(t.classList.contains("done")||t.classList.contains("open"))return;if(open.length===2)return;t.classList.add("open");open.push({icon,t});if(open.length===2){if(open[0].icon===open[1].icon){open.forEach(o=>o.t.classList.add("done"));matches++;open=[];if(matches===emojis.length)complete("memDone");}else setTimeout(()=>{open.forEach(o=>o.t.classList.remove("open"));open=[];},700);}};mem.appendChild(t);});
+
+// Finale
+function showFinale(){$("#finale").style.display="block";$("#finalPhoto").src=PHOTO_URL;}
+</script>
+</body>
+</html>
